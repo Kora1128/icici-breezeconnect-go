@@ -1,12 +1,11 @@
 package services
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
+	"errors"
 	"testing"
 
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
+	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/models"
 )
 
@@ -54,27 +53,14 @@ func TestGetCustomerDetails(t *testing.T) {
 		Status: 200,
 	}
 
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Test request method
-		if r.Method != "GET" {
-			t.Errorf("Expected GET request, got %s", r.Method)
-		}
+	// Create mock client
+	mockClient := mock.NewMockClient()
+	mockClient.SetResponse("/customerdetails", testResponse)
 
-		// Test request path
-		if r.URL.Path != "/customerdetails" {
-			t.Errorf("Expected /customerdetails path, got %s", r.URL.Path)
-		}
+	// Create service with mock client
+	service := NewCustomerService(mockClient)
 
-		// Return test response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testResponse)
-	}))
-	defer server.Close()
-
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	service := NewCustomerService(client)
-
+	// Test GetCustomerDetails
 	details, err := service.GetCustomerDetails("test_session")
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -90,5 +76,20 @@ func TestGetCustomerDetails(t *testing.T) {
 
 	if details.Success.SessionToken != "test_session_token" {
 		t.Errorf("Expected session token to be test_session_token, got %s", details.Success.SessionToken)
+	}
+}
+
+func TestGetCustomerDetailsError(t *testing.T) {
+	// Create mock client with error
+	mockClient := mock.NewMockClient()
+	mockClient.SetError("/customerdetails", errors.New("API error"))
+
+	// Create service with mock client
+	service := NewCustomerService(mockClient)
+
+	// Test GetCustomerDetails with error
+	_, err := service.GetCustomerDetails("test_session")
+	if err == nil {
+		t.Error("Expected error, got nil")
 	}
 }

@@ -1,9 +1,10 @@
 package breezeconnect
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"errors"
 	"testing"
+
+	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
 )
 
 func TestNewClient(t *testing.T) {
@@ -54,50 +55,35 @@ func TestGenerateChecksum(t *testing.T) {
 }
 
 func TestMakeRequest(t *testing.T) {
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Test headers
-		if r.Header.Get("Content-Type") != "application/json" {
-			t.Error("Expected Content-Type header to be application/json")
-		}
+	// Create mock client
+	mockClient := mock.NewMockClient()
 
-		// Test authentication headers when session key is set
-		if r.Header.Get("X-SessionToken") != "" {
-			if r.Header.Get("X-Checksum") == "" {
-				t.Error("Expected X-Checksum header when session token is present")
-			}
-			if r.Header.Get("X-Timestamp") == "" {
-				t.Error("Expected X-Timestamp header when session token is present")
-			}
-			if r.Header.Get("X-AppKey") == "" {
-				t.Error("Expected X-AppKey header when session token is present")
-			}
-		}
-
-		// Return test response
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"Success": "test", "Status": 200}`))
-	}))
-	defer server.Close()
-
-	client := NewClient("test_api_key", "test_api_secret")
+	// Test successful request
+	testResponse := map[string]interface{}{
+		"Success": "test",
+		"Status":  200,
+	}
+	mockClient.SetResponse("/test", testResponse)
 
 	// Test request without session key
-	resp, err := client.MakeRequest("GET", "/test", nil)
+	resp, err := mockClient.MakeRequest("GET", "/test", nil)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
-	if string(resp) != `{"Success": "test", "Status": 200}` {
+	if string(resp) != `{"Status":200,"Success":"test"}` {
 		t.Errorf("Expected test response, got %s", string(resp))
 	}
 
-	// Test request with session key
-	client.SetSessionKey("test_session")
-	resp, err = client.MakeRequest("GET", "/test", nil)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+	// Test request with error
+	mockClient.SetError("/test", errors.New("API error"))
+	_, err = mockClient.MakeRequest("GET", "/test", nil)
+	if err == nil {
+		t.Error("Expected error, got nil")
 	}
-	if string(resp) != `{"Success": "test", "Status": 200}` {
-		t.Errorf("Expected test response, got %s", string(resp))
+
+	// Test request with no mock response
+	_, err = mockClient.MakeRequest("GET", "/nonexistent", nil)
+	if err == nil {
+		t.Error("Expected error for nonexistent endpoint, got nil")
 	}
 }

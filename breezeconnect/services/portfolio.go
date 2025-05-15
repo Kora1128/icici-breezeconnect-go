@@ -10,11 +10,11 @@ import (
 
 // PortfolioService handles portfolio-related API calls
 type PortfolioService struct {
-	client *breezeconnect.Client
+	client breezeconnect.ClientInterface
 }
 
 // NewPortfolioService creates a new portfolio service
-func NewPortfolioService(client *breezeconnect.Client) *PortfolioService {
+func NewPortfolioService(client breezeconnect.ClientInterface) *PortfolioService {
 	return &PortfolioService{client: client}
 }
 

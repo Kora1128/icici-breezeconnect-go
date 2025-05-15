@@ -16,6 +16,13 @@ const (
 	baseURL = "https://api.icicidirect.com/breezeapi/api/v1"
 )
 
+// ClientInterface defines the interface for the Breeze API client
+type ClientInterface interface {
+	GetAPIKey() string
+	SetSessionKey(sessionKey string)
+	MakeRequest(method, endpoint string, payload interface{}) ([]byte, error)
+}
+
 // Client represents the Breeze API client
 type Client struct {
 	apiKey     string

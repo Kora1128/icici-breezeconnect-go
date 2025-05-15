@@ -10,11 +10,11 @@ import (
 
 // FundsService handles funds-related API calls
 type FundsService struct {
-	client *breezeconnect.Client
+	client breezeconnect.ClientInterface
 }
 
 // NewFundsService creates a new funds service
-func NewFundsService(client *breezeconnect.Client) *FundsService {
+func NewFundsService(client breezeconnect.ClientInterface) *FundsService {
 	return &FundsService{client: client}
 }
 
