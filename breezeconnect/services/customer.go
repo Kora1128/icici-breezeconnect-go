@@ -10,11 +10,11 @@ import (
 
 // CustomerService handles customer-related API calls
 type CustomerService struct {
-	client *breezeconnect.Client
+	client breezeconnect.ClientInterface
 }
 
 // NewCustomerService creates a new customer service
-func NewCustomerService(client *breezeconnect.Client) *CustomerService {
+func NewCustomerService(client breezeconnect.ClientInterface) *CustomerService {
 	return &CustomerService{client: client}
 }
 

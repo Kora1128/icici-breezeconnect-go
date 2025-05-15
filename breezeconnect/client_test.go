@@ -1,7 +1,10 @@
 package breezeconnect
 
 import (
+	"errors"
 	"testing"
+
+	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
 )
 
 func TestNewClient(t *testing.T) {
@@ -36,5 +39,51 @@ func TestGenerateChecksum(t *testing.T) {
 
 	if checksum == "" {
 		t.Error("Expected non-empty checksum")
+	}
+
+	// Test that same input produces same checksum
+	checksum2 := client.generateChecksum(timestamp, jsonData)
+	if checksum != checksum2 {
+		t.Error("Expected same checksum for same input")
+	}
+
+	// Test that different input produces different checksum
+	checksum3 := client.generateChecksum(timestamp, "different_data")
+	if checksum == checksum3 {
+		t.Error("Expected different checksum for different input")
+	}
+}
+
+func TestMakeRequest(t *testing.T) {
+	// Create mock client
+	mockClient := mock.NewMockClient()
+
+	// Test successful request
+	testResponse := map[string]interface{}{
+		"Success": "test",
+		"Status":  200,
+	}
+	mockClient.SetResponse("/test", testResponse)
+
+	// Test request without session key
+	resp, err := mockClient.MakeRequest("GET", "/test", nil)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+	if string(resp) != `{"Status":200,"Success":"test"}` {
+		t.Errorf("Expected test response, got %s", string(resp))
+	}
+
+	// Test request with error
+	mockClient.SetError("/test", errors.New("API error"))
+	_, err = mockClient.MakeRequest("GET", "/test", nil)
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+
+	// Test request with no mock response
+	_, err = mockClient.MakeRequest("GET", "/nonexistent", nil)
+	if err == nil {
+		t.Error("Expected error for nonexistent endpoint, got nil")
 	}
 }

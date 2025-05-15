@@ -10,11 +10,11 @@ import (
 
 // DematService handles demat-related API calls
 type DematService struct {
-	client *breezeconnect.Client
+	client breezeconnect.ClientInterface
 }
 
 // NewDematService creates a new demat service
-func NewDematService(client *breezeconnect.Client) *DematService {
+func NewDematService(client breezeconnect.ClientInterface) *DematService {
 	return &DematService{client: client}
 }
 
