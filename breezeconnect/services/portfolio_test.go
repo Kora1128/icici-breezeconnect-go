@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/models"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect/mock"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect/models"
 )
 
 func TestNewPortfolioService(t *testing.T) {

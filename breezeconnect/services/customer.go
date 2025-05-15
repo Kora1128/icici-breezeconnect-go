@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/models"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect/models"
 )
 
 // CustomerService handles customer-related API calls

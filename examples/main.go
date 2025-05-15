@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/services"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect/services"
 )
 
 func main() {
