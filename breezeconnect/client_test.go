@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
+	"github.com/Kora1128/icici-breezeconnect-go/breezeconnect/mock"
 )
 
 func TestNewClient(t *testing.T) {

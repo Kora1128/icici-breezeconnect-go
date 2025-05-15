@@ -15,7 +15,7 @@ A Go SDK for interacting with the ICICI Direct BreezeConnect API. This SDK provi
 ## Installation
 
 ```bash
-go get github.com/kowshikr/icici-breezeconnect-go
+go get github.com/Kora1128/icici-breezeconnect-go
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ go get github.com/kowshikr/icici-breezeconnect-go
 ### Initialization
 
 ```go
-import "github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
+import "github.com/Kora1128/icici-breezeconnect-go/breezeconnect"
 
 // Create a new client
 client := breezeconnect.NewClient("your_api_key", "your_api_secret")
