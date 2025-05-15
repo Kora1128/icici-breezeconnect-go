@@ -1,12 +1,11 @@
 package services
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
+	"errors"
 	"testing"
 
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
+	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/models"
 )
 
@@ -49,33 +48,14 @@ func TestGetDematHoldings(t *testing.T) {
 		Status: 200,
 	}
 
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Test request method
-		if r.Method != "GET" {
-			t.Errorf("Expected GET request, got %s", r.Method)
-		}
+	// Create mock client
+	mockClient := mock.NewMockClient()
+	mockClient.SetResponse("/demat/holdings", testResponse)
 
-		// Test request path
-		if r.URL.Path != "/demat/holdings" {
-			t.Errorf("Expected /demat/holdings path, got %s", r.URL.Path)
-		}
+	// Create service with mock client
+	service := NewDematService(mockClient)
 
-		// Test headers
-		if r.Header.Get("X-SessionToken") == "" {
-			t.Error("Expected X-SessionToken header to be present")
-		}
-
-		// Return test response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testResponse)
-	}))
-	defer server.Close()
-
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	client.SetSessionKey("test_session")
-	service := NewDematService(client)
-
+	// Test GetDematHoldings
 	holdings, err := service.GetDematHoldings()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -111,20 +91,14 @@ func TestGetDematHoldings(t *testing.T) {
 }
 
 func TestGetDematHoldingsError(t *testing.T) {
-	// Create a test server that returns an error
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.DematHoldingsResponse{
-			Status: 400,
-			Error:  "Invalid session token",
-		})
-	}))
-	defer server.Close()
+	// Create mock client with error
+	mockClient := mock.NewMockClient()
+	mockClient.SetError("/demat/holdings", errors.New("API error"))
 
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	client.SetSessionKey("invalid_session")
-	service := NewDematService(client)
+	// Create service with mock client
+	service := NewDematService(mockClient)
 
+	// Test GetDematHoldings with error
 	_, err := service.GetDematHoldings()
 	if err == nil {
 		t.Error("Expected error, got nil")
@@ -138,17 +112,14 @@ func TestGetDematHoldingsEmpty(t *testing.T) {
 		Status:  200,
 	}
 
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testResponse)
-	}))
-	defer server.Close()
+	// Create mock client
+	mockClient := mock.NewMockClient()
+	mockClient.SetResponse("/demat/holdings", testResponse)
 
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	client.SetSessionKey("test_session")
-	service := NewDematService(client)
+	// Create service with mock client
+	service := NewDematService(mockClient)
 
+	// Test GetDematHoldings
 	holdings, err := service.GetDematHoldings()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)

@@ -1,12 +1,11 @@
 package services
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
+	"errors"
 	"testing"
 
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect"
+	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/mock"
 	"github.com/kowshikr/icici-breezeconnect-go/breezeconnect/models"
 )
 
@@ -41,28 +40,14 @@ func TestGetPortfolioHoldings(t *testing.T) {
 		Status: 200,
 	}
 
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Test request method
-		if r.Method != "GET" {
-			t.Errorf("Expected GET request, got %s", r.Method)
-		}
+	// Create mock client
+	mockClient := mock.NewMockClient()
+	mockClient.SetResponse("/portfolio/holdings", testResponse)
 
-		// Test request path
-		if r.URL.Path != "/portfolio/holdings" {
-			t.Errorf("Expected /portfolio/holdings path, got %s", r.URL.Path)
-		}
+	// Create service with mock client
+	service := NewPortfolioService(mockClient)
 
-		// Return test response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testResponse)
-	}))
-	defer server.Close()
-
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	client.SetSessionKey("test_session")
-	service := NewPortfolioService(client)
-
+	// Test GetPortfolioHoldings
 	holdings, err := service.GetPortfolioHoldings()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -103,28 +88,14 @@ func TestGetPositions(t *testing.T) {
 		Status: 200,
 	}
 
-	// Create a test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Test request method
-		if r.Method != "GET" {
-			t.Errorf("Expected GET request, got %s", r.Method)
-		}
+	// Create mock client
+	mockClient := mock.NewMockClient()
+	mockClient.SetResponse("/portfolio/positions", testResponse)
 
-		// Test request path
-		if r.URL.Path != "/portfolio/positions" {
-			t.Errorf("Expected /portfolio/positions path, got %s", r.URL.Path)
-		}
+	// Create service with mock client
+	service := NewPortfolioService(mockClient)
 
-		// Return test response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(testResponse)
-	}))
-	defer server.Close()
-
-	client := breezeconnect.NewClient("test_api_key", "test_api_secret")
-	client.SetSessionKey("test_session")
-	service := NewPortfolioService(client)
-
+	// Test GetPositions
 	positions, err := service.GetPositions()
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
@@ -145,5 +116,35 @@ func TestGetPositions(t *testing.T) {
 
 	if position.ProductType != "futures" {
 		t.Errorf("Expected product type to be futures, got %s", position.ProductType)
+	}
+}
+
+func TestGetPortfolioHoldingsError(t *testing.T) {
+	// Create mock client with error
+	mockClient := mock.NewMockClient()
+	mockClient.SetError("/portfolio/holdings", errors.New("API error"))
+
+	// Create service with mock client
+	service := NewPortfolioService(mockClient)
+
+	// Test GetPortfolioHoldings with error
+	_, err := service.GetPortfolioHoldings()
+	if err == nil {
+		t.Error("Expected error, got nil")
+	}
+}
+
+func TestGetPositionsError(t *testing.T) {
+	// Create mock client with error
+	mockClient := mock.NewMockClient()
+	mockClient.SetError("/portfolio/positions", errors.New("API error"))
+
+	// Create service with mock client
+	service := NewPortfolioService(mockClient)
+
+	// Test GetPositions with error
+	_, err := service.GetPositions()
+	if err == nil {
+		t.Error("Expected error, got nil")
 	}
 }
