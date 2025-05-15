@@ -33,74 +33,45 @@ func NewClient(apiKey, apiSecret string) *Client {
 	}
 }
 
-// GenerateSession generates a new session token
-func (c *Client) GenerateSession() error {
+// GetAPIKey returns the API key
+func (c *Client) GetAPIKey() string {
+	return c.apiKey
+}
+
+// SetSessionKey sets the session key
+func (c *Client) SetSessionKey(sessionKey string) {
+	c.sessionKey = sessionKey
+}
+
+// MakeRequest makes an authenticated request to the API
+func (c *Client) MakeRequest(method, endpoint string, payload interface{}) ([]byte, error) {
 	timestamp := time.Now().Format("2006-01-02T15:04:05.000Z")
-	checksum := c.generateChecksum(timestamp)
 
-	payload := map[string]string{
-		"api_key":   c.apiKey,
-		"timestamp": timestamp,
-		"checksum":  checksum,
-	}
-
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("error marshaling payload: %v", err)
-	}
-
-	req, err := http.NewRequest("POST", baseURL+"/authenticate", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Errorf("error decoding response: %v", err)
-	}
-
-	if sessionToken, ok := result["session_token"].(string); ok {
-		c.sessionKey = sessionToken
-		return nil
-	}
-
-	return fmt.Errorf("failed to get session token")
-}
-
-// generateChecksum generates the checksum for authentication
-func (c *Client) generateChecksum(timestamp string) string {
-	data := c.apiKey + timestamp
-	h := hmac.New(sha256.New, []byte(c.apiSecret))
-	h.Write([]byte(data))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-// makeRequest makes an authenticated request to the API
-func (c *Client) makeRequest(method, endpoint string, payload interface{}) ([]byte, error) {
-	var body io.Reader
+	var jsonData []byte
+	var err error
 	if payload != nil {
-		jsonData, err := json.Marshal(payload)
+		jsonData, err = json.Marshal(payload)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling payload: %v", err)
 		}
-		body = bytes.NewBuffer(jsonData)
 	}
 
-	req, err := http.NewRequest(method, baseURL+endpoint, body)
+	req, err := http.NewRequest(method, baseURL+endpoint, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.sessionKey)
+
+	// Only add authentication headers if we have a session key
+	// This ensures GetCustomerDetails works without session token
+	if c.sessionKey != "" {
+		checksum := c.generateChecksum(timestamp, string(jsonData))
+		req.Header.Set("X-Checksum", "token "+checksum)
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-AppKey", c.apiKey)
+		req.Header.Set("X-SessionToken", c.sessionKey)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -118,4 +89,12 @@ func (c *Client) makeRequest(method, endpoint string, payload interface{}) ([]by
 	}
 
 	return responseBody, nil
+}
+
+// generateChecksum generates the checksum for authentication
+func (c *Client) generateChecksum(timestamp, jsonData string) string {
+	data := timestamp + jsonData + c.apiSecret
+	h := hmac.New(sha256.New, []byte(c.apiSecret))
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
 }
